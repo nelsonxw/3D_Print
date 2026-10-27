@@ -1,0 +1,21 @@
+# Secrets and local config
+.env
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+next-env.d.ts
+
+# Runtime data
+data/
+storage/
+*.mvs
+*.db

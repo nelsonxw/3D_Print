@@ -1,0 +1,21 @@
+# COLMAP with CUDA support for SIFT feature extraction and matching on the GPU.
+# Verify the base image tag against https://hub.docker.com/r/colmap/colmap before production use.
+ARG COLMAP_IMAGE=colmap/colmap:latest
+FROM ${COLMAP_IMAGE}
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    ALLOWED_BINARIES=colmap \
+    PYTHONUNBUFFERED=1
+
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends python3 python3-pip python3-venv \
+ && python3 -m venv /opt/runner \
+ && rm -rf /var/lib/apt/lists/*
+
+COPY requirements.txt /tmp/requirements.txt
+RUN /opt/runner/bin/pip install --no-cache-dir -r /tmp/requirements.txt
+COPY runner.py /app/runner.py
+
+WORKDIR /app
+EXPOSE 8001
+CMD ["/opt/runner/bin/uvicorn", "runner:app", "--host", "0.0.0.0", "--port", "8001"]

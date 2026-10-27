@@ -1,0 +1,44 @@
+# OpenMVS built from source (no official prebuilt image is maintained upstream).
+# Pin OPENMVS_REF to a reviewed release tag before production use.
+FROM ubuntu:22.04 AS builder
+
+ARG OPENMVS_REF=v2.2.0
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      git cmake build-essential ca-certificates \
+      libeigen3-dev libboost-iostreams-dev libboost-program-options-dev \
+      libboost-serialization-dev libboost-system-dev libboost-filesystem-dev \
+      libopencv-dev libcgal-dev libceres-dev libatlas-base-dev \
+      libpng-dev libjpeg-dev libtiff-dev libglfw3-dev libglew-dev \
+ && rm -rf /var/lib/apt/lists/*
+
+RUN git clone --depth 1 --branch ${OPENMVS_REF} --recursive https://github.com/cdcseacave/openMVS.git /src/openMVS \
+ && cmake -S /src/openMVS -B /build -DCMAKE_BUILD_TYPE=Release -DOpenMVS_USE_CUDA=OFF -DOpenMVS_BUILD_VIEWER=OFF \
+ && cmake --build /build --parallel "$(nproc)" \
+ && cmake --install /build --prefix /opt/openmvs
+
+FROM ubuntu:22.04
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    ALLOWED_BINARIES=InterfaceCOLMAP,DensifyPointCloud,ReconstructMesh \
+    PATH=/opt/openmvs/bin:/opt/runner/bin:$PATH \
+    PYTHONUNBUFFERED=1
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      python3 python3-venv libboost-iostreams1.74.0 libboost-program-options1.74.0 \
+      libboost-serialization1.74.0 libboost-system1.74.0 libboost-filesystem1.74.0 \
+      libopencv-core4.5d libopencv-imgcodecs4.5d libopencv-imgproc4.5d \
+      libceres2 libcgal13 libglfw3 libglew2.2 \
+ && rm -rf /var/lib/apt/lists/* \
+ && python3 -m venv /opt/runner
+
+COPY --from=builder /opt/openmvs /opt/openmvs
+
+COPY requirements.txt /tmp/requirements.txt
+RUN /opt/runner/bin/pip install --no-cache-dir -r /tmp/requirements.txt
+COPY runner.py /app/runner.py
+
+WORKDIR /app
+EXPOSE 8002
+CMD ["/opt/runner/bin/uvicorn", "runner:app", "--host", "0.0.0.0", "--port", "8002"]

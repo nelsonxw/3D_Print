@@ -1,0 +1,133 @@
+name: photo-to-stl
+
+x-backend-environment: &backend-environment
+  DATABASE_URL: postgresql+psycopg://photo:${POSTGRES_PASSWORD:-photo}@postgres:5432/photo_stl
+  REDIS_URL: redis://redis:6379/0
+  JWT_SECRET: ${JWT_SECRET:-dev-only-change-me}
+  CORS_ORIGINS: '["http://localhost:3000"]'
+  STORAGE_ROOT: /data
+  CLAMAV_HOST: clamav
+  CLAMAV_ENABLED: ${CLAMAV_ENABLED:-true}
+  COLMAP_RUNNER_URL: http://colmap:8001
+  OPENMVS_RUNNER_URL: http://openmvs:8002
+  COLMAP_USE_GPU: ${COLMAP_USE_GPU:-true}
+
+x-gpu: &gpu
+  deploy:
+    resources:
+      reservations:
+        devices:
+          - driver: nvidia
+            count: all
+            capabilities: [gpu]
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: photo_stl
+      POSTGRES_USER: photo
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-photo}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U photo -d photo_stl"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  clamav:
+    image: clamav/clamav:1.4
+    volumes:
+      - clamav-data:/var/lib/clamav
+    healthcheck:
+      test: ["CMD", "clamdcheck.sh"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 300s
+    restart: unless-stopped
+
+  colmap:
+    build:
+      context: ./tool-runner
+      dockerfile: Dockerfile.colmap
+    volumes:
+      - storage:/data
+    <<: *gpu
+    restart: unless-stopped
+
+  openmvs:
+    build:
+      context: ./tool-runner
+      dockerfile: Dockerfile.openmvs
+    volumes:
+      - storage:/data
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+      target: api
+    environment: *backend-environment
+    volumes:
+      - storage:/data
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: ./backend
+      target: worker
+    environment:
+      <<: *backend-environment
+      BLENDER_BIN: /opt/blender/blender
+    command: ["celery", "-A", "app.celery_app", "worker", "--concurrency=1", "--loglevel=info"]
+    volumes:
+      - storage:/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      colmap:
+        condition: service_started
+      openmvs:
+        condition: service_started
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  postgres-data:
+  redis-data:
+  clamav-data:
+  storage:
