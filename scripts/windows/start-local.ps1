@@ -7,6 +7,7 @@ param(
     [string]$BlenderExe = "",
     [string]$StorageDir = "",
     [string]$JwtSecret = "dev-only-change-me",
+    [switch]$CpuOnly,
     [string]$DatabaseUrl = "postgresql+psycopg://photo:photo@localhost:5432/photo_stl",
     [string]$RedisUrl = "redis://localhost:6379/0"
 )
@@ -36,7 +37,7 @@ $env:CLAMAV_ENABLED = "false"
 $env:BLENDER_BIN = $BlenderExe
 $env:COLMAP_RUNNER_URL = "http://localhost:8001"
 $env:OPENMVS_RUNNER_URL = "http://localhost:8001"
-$env:COLMAP_USE_GPU = "true"
+$env:COLMAP_USE_GPU = if ($CpuOnly) { "false" } else { "true" }
 $env:ALLOWED_BINARIES = "colmap,InterfaceCOLMAP,DensifyPointCloud,ReconstructMesh"
 
 $backend = Join-Path $root "backend"
