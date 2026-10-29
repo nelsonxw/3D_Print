@@ -6,7 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { StatusTimeline } from "@/components/StatusTimeline";
 import { api } from "@/lib/api";
-import { useRequireSession } from "@/lib/useRequireSession";
+import { useGuestSession } from "@/lib/useGuestSession";
 import type { DownloadFormat, Job } from "@/lib/types";
 
 const ModelViewer = dynamic(() => import("@/components/ModelViewer"), {
@@ -29,7 +29,7 @@ function saveBlob(blob: Blob, filename: string): void {
 export default function ModelPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
-  const ready = useRequireSession();
+  const { ready, error: sessionError } = useGuestSession();
   const [job, setJob] = useState<Job | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -85,7 +85,7 @@ export default function ModelPage() {
     }
   };
 
-  if (!ready) return null;
+  if (!ready) return sessionError ? <p role="alert" className="text-red-600">{sessionError}</p> : null;
   if (!job) {
     return error ? <p role="alert" className="text-red-600">{error}</p> : <p className="text-slate-500">Loading...</p>;
   }

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { api } from "@/lib/api";
-import { useRequireSession } from "@/lib/useRequireSession";
+import { useGuestSession } from "@/lib/useGuestSession";
 import type { Job, JobStatus } from "@/lib/types";
 
 const STATUS_BADGES: Record<JobStatus, string> = {
@@ -14,7 +14,7 @@ const STATUS_BADGES: Record<JobStatus, string> = {
 };
 
 export default function JobsPage() {
-  const ready = useRequireSession();
+  const { ready, error: sessionError } = useGuestSession();
   const [jobs, setJobs] = useState<Job[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -30,7 +30,7 @@ export default function JobsPage() {
     if (ready) load();
   }, [ready, load]);
 
-  if (!ready) return null;
+  if (!ready) return sessionError ? <p role="alert" className="text-red-600">{sessionError}</p> : null;
 
   return (
     <section className="space-y-6">

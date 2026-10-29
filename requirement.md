@@ -11,7 +11,7 @@ The solution must use only free and open-source software components. Do not use 
 ### User Workflow
 
 1. User visits website.
-2. User creates an account or uses guest mode.
+2. User uploads photos directly (no sign-in or registration required).
 3. User uploads photos of a single object. Suggested counts: **minimum 20, recommended 50-100, maximum 150**, taken with roughly 60-80% overlap between neighbouring shots and the object kept in focus.
 4. Website validates:
    - JPG/JPEG/PNG formats
@@ -146,7 +146,7 @@ Implement:
 - Rate limiting
 - File size limits
 - Virus scan of uploaded files
-- User authentication with JWT
+- Each browser gets an anonymous session token on first visit; models and downloads are only accessible to the session that created them
 - Secure file storage
 
 ## Performance Goals

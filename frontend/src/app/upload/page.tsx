@@ -3,10 +3,11 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Dropzone } from "@/components/Dropzone";
+import { PhotoGuide } from "@/components/PhotoGuide";
 import { ReconstructionOptionsForm } from "@/components/ReconstructionOptionsForm";
 import { api, uploadPhotos } from "@/lib/api";
 import { PHOTO_LIMITS } from "@/lib/config";
-import { useRequireSession } from "@/lib/useRequireSession";
+import { useGuestSession } from "@/lib/useGuestSession";
 import { photoCountErrors, validatePhotos } from "@/lib/photoValidation";
 import { DEFAULT_OPTIONS, type ReconstructionOptions, type UploadResponse } from "@/lib/types";
 
@@ -16,7 +17,7 @@ function fileKey(file: File): string {
 
 export default function UploadPage() {
   const router = useRouter();
-  const ready = useRequireSession();
+  const { ready, error: sessionError } = useGuestSession();
   const [files, setFiles] = useState<File[]>([]);
   const [errors, setErrors] = useState<string[]>([]);
   const [progress, setProgress] = useState<number | null>(null);
@@ -24,7 +25,6 @@ export default function UploadPage() {
   const [options, setOptions] = useState<ReconstructionOptions>(DEFAULT_OPTIONS);
   const [busy, setBusy] = useState(false);
 
-  if (!ready) return null;
 
   const addFiles = async (incoming: File[]) => {
     const existing = new Set(files.map(fileKey));
@@ -66,7 +66,7 @@ export default function UploadPage() {
   };
 
   const countErrors = photoCountErrors(files.length);
-  const canUpload = files.length > 0 && errors.length === 0 && !upload;
+  const canUpload = ready && files.length > 0 && errors.length === 0 && !upload;
 
   return (
     <div className="grid gap-8 lg:grid-cols-[1fr_360px]">
@@ -78,7 +78,11 @@ export default function UploadPage() {
           </p>
         </div>
 
-        <Dropzone onFiles={addFiles} disabled={busy || upload !== null} />
+        {sessionError && <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{sessionError}</p>}
+
+        <PhotoGuide />
+
+        <Dropzone onFiles={addFiles} disabled={!ready || busy || upload !== null} />
 
         <div className="flex items-center justify-between text-sm">
           <span className="font-medium text-slate-700">

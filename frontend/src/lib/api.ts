@@ -33,10 +33,10 @@ function authHeaders(): Record<string, string> {
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
-function handleUnauthorized(path: string, status: number): void {
-  if (status === 401 && !path.startsWith("/auth")) {
+function handleUnauthorized(status: number): void {
+  if (status === 401) {
     clearToken();
-    window.location.assign("/");
+    window.location.reload();
   }
 }
 
@@ -46,7 +46,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
     headers: { ...authHeaders(), ...(init.headers as Record<string, string> | undefined) },
   });
   if (!response.ok) {
-    handleUnauthorized(path, response.status);
+    handleUnauthorized(response.status);
     const body = parseBody(await response.text());
     throw new ApiError(errorMessageFrom(body, response.status), response.status);
   }
@@ -63,9 +63,6 @@ function postJson(body: unknown): RequestInit {
 
 export const api = {
   guestSession: () => request<AuthSession>("/auth/guest", { method: "POST" }),
-  login: (email: string, password: string) => request<AuthSession>("/auth/login", postJson({ email, password })),
-  register: (email: string, password: string) =>
-    request<AuthSession>("/auth/register", postJson({ email, password })),
   listJobs: () => request<Job[]>("/jobs"),
   getJob: (jobId: string) => request<Job>(`/job-status/${jobId}`),
   startReconstruction: (uploadId: string, options: ReconstructionOptions) =>
