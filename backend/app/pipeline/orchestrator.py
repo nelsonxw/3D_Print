@@ -36,7 +36,8 @@ def run_reconstruction(job_id: str) -> None:
 def _run_job(db: Session, job: Job) -> None:
     settings = get_settings()
     workspace = _workspace_for(job)
-    workspace.output.mkdir(parents=True, exist_ok=True)
+    for directory in (workspace.sparse, workspace.undistorted, workspace.openmvs, workspace.output):
+        directory.mkdir(parents=True, exist_ok=True)
 
     job.status = "running"
     _advance(db, job, JobStage.UPLOAD_COMPLETE)

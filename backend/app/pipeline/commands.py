@@ -44,14 +44,14 @@ def photo_analysis_commands(ws: Workspace, use_gpu: bool) -> list[ToolCommand]:
             "--image_path", str(ws.images),
             "--ImageReader.single_camera", "1",
             "--ImageReader.camera_model", "SIMPLE_RADIAL",
-            "--SiftExtraction.max_image_size", "3200",
+            "--FeatureExtraction.max_image_size", "3200",
             "--SiftExtraction.max_num_features", "8192",
-            "--SiftExtraction.use_gpu", gpu,
+            "--FeatureExtraction.use_gpu", gpu,
         )),
         ToolCommand("colmap", "colmap", (
             "exhaustive_matcher",
             "--database_path", str(ws.database),
-            "--SiftMatching.use_gpu", gpu,
+            "--FeatureMatching.use_gpu", gpu,
         )),
     ]
 
@@ -87,11 +87,13 @@ def mesh_generation_commands(ws: Workspace) -> list[ToolCommand]:
             str(scene),
             "--resolution-level", "1",
             "--number-views", "8",
+            "-w", str(ws.openmvs),
             "-o", str(dense),
         )),
         ToolCommand("openmvs", "ReconstructMesh", (
             str(dense),
             "--remove-spurious", "20",
+            "-w", str(ws.openmvs),
             "-o", str(ws.output / "model_raw.ply"),
         )),
     ]

@@ -7,6 +7,7 @@ The config keys are produced by app.pipeline.blender.cleanup.
 import json
 import os
 import sys
+import traceback
 
 import bmesh
 import bpy
@@ -152,4 +153,8 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception:
+        traceback.print_exc()
+        sys.exit(1)
