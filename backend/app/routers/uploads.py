@@ -1,3 +1,4 @@
+import asyncio
 import shutil
 import uuid
 from pathlib import Path
@@ -35,7 +36,7 @@ async def upload_photos(
     images_dir = directory / "images"
     images_dir.mkdir(parents=True, exist_ok=True)
     try:
-        saved = [await _store_photo(file, images_dir, settings.max_upload_mb) for file in files]
+        saved = await asyncio.gather(*[_store_photo(file, images_dir, settings.max_upload_mb) for file in files])
     except Exception:
         shutil.rmtree(directory, ignore_errors=True)
         raise

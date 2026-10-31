@@ -54,13 +54,20 @@ export type AuthSession = {
 
 export type DownloadFormat = "stl" | "obj" | "ply";
 
-export const PIPELINE_STAGES: { key: string; label: string }[] = [
-  { key: "upload_complete", label: "Upload Complete" },
-  { key: "photo_analysis", label: "Photo Analysis" },
-  { key: "photogrammetry_reconstruction", label: "Photogrammetry Reconstruction" },
-  { key: "mesh_generation", label: "Mesh Generation" },
-  { key: "mesh_cleanup", label: "Mesh Cleanup" },
-  { key: "stl_export", label: "STL Export" },
+export type PipelineStage = {
+  key: string;
+  label: string;
+  startProgress: number;
+  endProgress: number;
+};
+
+export const PIPELINE_STAGES: PipelineStage[] = [
+  { key: "upload_complete", label: "Upload Complete", startProgress: 0, endProgress: 10 },
+  { key: "photo_analysis", label: "Photo Analysis", startProgress: 10, endProgress: 25 },
+  { key: "photogrammetry_reconstruction", label: "Photogrammetry Reconstruction", startProgress: 25, endProgress: 45 },
+  { key: "mesh_generation", label: "Mesh Generation", startProgress: 45, endProgress: 65 },
+  { key: "mesh_cleanup", label: "Mesh Cleanup", startProgress: 65, endProgress: 85 },
+  { key: "stl_export", label: "STL Export", startProgress: 85, endProgress: 100 },
 ];
 
 export const DEFAULT_OPTIONS: ReconstructionOptions = {

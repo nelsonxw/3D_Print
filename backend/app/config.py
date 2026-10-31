@@ -35,7 +35,7 @@ class Settings(BaseSettings):
     colmap_runner_url: str = "http://localhost:8001"
     openmvs_runner_url: str = "http://localhost:8002"
     colmap_use_gpu: bool = True
-    tool_timeout_seconds: int = 60 * 60
+    tool_timeout_seconds: int = 60 * 60 * 8
 
     blender_bin: str = "blender"
     blender_timeout_seconds: int = 60 * 30

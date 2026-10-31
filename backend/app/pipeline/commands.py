@@ -37,6 +37,8 @@ class Workspace:
 
 def photo_analysis_commands(ws: Workspace, use_gpu: bool) -> list[ToolCommand]:
     gpu = "1" if use_gpu else "0"
+    max_image_size = "3200" if use_gpu else "2048"
+    max_num_features = "8192" if use_gpu else "4096"
     return [
         ToolCommand("colmap", "colmap", (
             "feature_extractor",
@@ -44,8 +46,8 @@ def photo_analysis_commands(ws: Workspace, use_gpu: bool) -> list[ToolCommand]:
             "--image_path", str(ws.images),
             "--ImageReader.single_camera", "1",
             "--ImageReader.camera_model", "SIMPLE_RADIAL",
-            "--FeatureExtraction.max_image_size", "3200",
-            "--SiftExtraction.max_num_features", "8192",
+            "--FeatureExtraction.max_image_size", max_image_size,
+            "--SiftExtraction.max_num_features", max_num_features,
             "--FeatureExtraction.use_gpu", gpu,
         )),
         ToolCommand("colmap", "colmap", (
@@ -85,8 +87,8 @@ def mesh_generation_commands(ws: Workspace) -> list[ToolCommand]:
         )),
         ToolCommand("openmvs", "DensifyPointCloud", (
             str(scene),
-            "--resolution-level", "1",
-            "--number-views", "8",
+            "--resolution-level", "2",
+            "--number-views", "6",
             "-w", str(ws.openmvs),
             "-o", str(dense),
         )),

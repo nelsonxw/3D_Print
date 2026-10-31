@@ -28,6 +28,11 @@ foreach ($path in @($ColmapBin, $OpenMvsBin, $BlenderExe)) {
 }
 
 $env:PATH = "$ColmapBin;$OpenMvsBin;$env:PATH"
+$ColmapPlugins = Join-Path (Split-Path $ColmapBin -Parent) "plugins"
+if (Test-Path $ColmapPlugins) {
+    $env:QT_PLUGIN_PATH = $ColmapPlugins
+}
+$env:QT_QPA_PLATFORM = "offscreen"
 $env:DATABASE_URL = $DatabaseUrl
 $env:REDIS_URL = $RedisUrl
 $env:JWT_SECRET = $JwtSecret
@@ -39,6 +44,7 @@ $env:COLMAP_RUNNER_URL = "http://localhost:8001"
 $env:OPENMVS_RUNNER_URL = "http://localhost:8001"
 $env:COLMAP_USE_GPU = if ($CpuOnly) { "false" } else { "true" }
 $env:ALLOWED_BINARIES = "colmap,InterfaceCOLMAP,DensifyPointCloud,ReconstructMesh"
+$env:TOOL_TIMEOUT_SECONDS = "28800"
 
 $backend = Join-Path $root "backend"
 $runner = Join-Path $root "tool-runner"

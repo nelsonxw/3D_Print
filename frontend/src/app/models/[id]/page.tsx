@@ -109,8 +109,25 @@ export default function ModelPage() {
           </div>
         )}
 
-        <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200" role="progressbar" aria-valuenow={job.progress}>
-          <div className="h-full bg-sky-600 transition-all" style={{ width: `${job.progress}%` }} />
+        <div className="space-y-1.5">
+          <div className="flex justify-between text-xs font-semibold text-slate-600">
+            <span>Overall Progress</span>
+            <span className={job.status === "completed" ? "text-emerald-600" : job.status === "failed" ? "text-red-600" : "text-sky-600"}>
+              {job.progress}%
+            </span>
+          </div>
+          <div className="h-2.5 w-full overflow-hidden rounded-full bg-slate-200" role="progressbar" aria-valuenow={job.progress}>
+            <div
+              className={`h-full transition-all duration-500 ease-out ${
+                job.status === "failed"
+                  ? "bg-red-500"
+                  : job.status === "completed"
+                  ? "bg-emerald-500"
+                  : "bg-sky-600"
+              }`}
+              style={{ width: `${job.progress}%` }}
+            />
+          </div>
         </div>
 
         {isCompleted && previewUrl && <ModelViewer url={previewUrl} />}

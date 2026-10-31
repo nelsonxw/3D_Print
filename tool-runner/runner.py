@@ -4,7 +4,9 @@ The worker sends argument lists (never shell strings), so no shell is involved.
 """
 
 import os
+import shutil
 import subprocess
+from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
@@ -37,12 +39,22 @@ def run(request: RunRequest) -> RunResponse:
     if request.binary not in ALLOWED_BINARIES:
         raise HTTPException(status_code=403, detail=f"Binary not allowed: {request.binary}")
     try:
+        env = os.environ.copy()
+        env.setdefault("QT_QPA_PLATFORM", "offscreen")
+        if "QT_PLUGIN_PATH" not in env:
+            bin_path = shutil.which(request.binary) or shutil.which("colmap")
+            if bin_path:
+                candidate_plugins = Path(bin_path).resolve().parent.parent / "plugins"
+                if candidate_plugins.is_dir():
+                    env["QT_PLUGIN_PATH"] = str(candidate_plugins)
+
         completed = subprocess.run(
             [request.binary, *request.args],
             capture_output=True,
             text=True,
             timeout=request.timeout_seconds,
             check=False,
+            env=env,
         )
     except subprocess.TimeoutExpired as exc:
         raise HTTPException(status_code=504, detail=f"{request.binary} timed out") from exc
